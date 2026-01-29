@@ -1,0 +1,117 @@
+
+import React, { useState, useEffect } from 'react';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Sidebar } from './components/Sidebar';
+import { Navbar } from './components/Navbar';
+import { Dashboard } from './pages/Dashboard';
+import { Compose } from './pages/Compose';
+import { SMTPConfigPage } from './pages/SMTPConfig';
+import { Databases } from './pages/Databases';
+import { Analytics } from './pages/Analytics';
+import { EmailLogs } from './pages/EmailLogs';
+import { Templates } from './pages/Templates';
+import { Login } from './pages/Login';
+import { Page, SMTPConfig, DatabaseConnection } from './types';
+
+const AppContent: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Shared State for sync between pages
+  const [smtpProfiles, setSmtpProfiles] = useState<SMTPConfig[]>([
+    { id: '1', name: 'Acme Marketing', provider: 'gmail', email: 'news@acme.com', host: 'smtp.gmail.com', port: 587, isDefault: true },
+    { id: '2', name: 'Support Desk', provider: 'hostinger', email: 'help@acme.com', host: 'smtp.hostinger.com', port: 465, isDefault: false },
+  ]);
+
+  const [databases, setDatabases] = useState<DatabaseConnection[]>([
+    { id: '1', name: 'Main Newsletter', type: 'postgres', status: 'connected', recordCount: 12430 },
+    { id: '2', name: 'Purchased Customers', type: 'mysql', status: 'connected', recordCount: 2100 },
+  ]);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const authStatus = localStorage.getItem('is_auth') === 'true';
+    setIsAuthenticated(authStatus);
+  }, []);
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem('is_auth');
+    setIsAuthenticated(false);
+    window.location.hash = '/login';
+  };
+
+  const addSmtpProfile = (profile: Omit<SMTPConfig, 'id'>) => {
+    const newProfile = { ...profile, id: Date.now().toString() };
+    setSmtpProfiles([...smtpProfiles, newProfile]);
+  };
+
+  const addDatabase = (db: Omit<DatabaseConnection, 'id'>) => {
+    const newDb = { ...db, id: Date.now().toString() };
+    setDatabases([...databases, newDb]);
+  };
+
+  if (!isAuthenticated && location.pathname !== '/login') {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (location.pathname === '/login') {
+    return <Login onLogin={() => setIsAuthenticated(true)} />;
+  }
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      <Sidebar 
+        isCollapsed={isSidebarCollapsed} 
+        isMobileMenuOpen={isMobileMenuOpen}
+        onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+        onCloseMobile={() => setIsMobileMenuOpen(false)}
+        onLogout={handleLogout}
+      />
+      
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <Navbar 
+          onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+          onOpenMobile={() => setIsMobileMenuOpen(true)}
+        />
+        
+        <main className="flex-1 relative overflow-y-auto focus:outline-none p-4 md:p-6">
+          <Routes>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/compose" element={<Compose smtpProfiles={smtpProfiles} databases={databases} />} />
+            <Route path="/templates" element={<Templates />} />
+            <Route path="/smtp" element={<SMTPConfigPage profiles={smtpProfiles} onAdd={addSmtpProfile} />} />
+            <Route path="/databases" element={<Databases databases={databases} onAdd={addDatabase} />} />
+            <Route path="/logs" element={<EmailLogs />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
+  );
+};
+
+export default App;
