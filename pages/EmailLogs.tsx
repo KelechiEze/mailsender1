@@ -1,6 +1,10 @@
 
 import React from 'react';
-import { Search, Filter, ArrowUpRight, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Search, Filter, ArrowUpRight, CheckCircle2, XCircle, Clock, Inbox } from 'lucide-react';
+
+interface EmailLogsProps {
+  searchQuery: string;
+}
 
 const logs = [
   { id: '1', recipient: 'sarah.jones@example.com', status: 'sent', smtp: 'Marketing Pro', date: 'Oct 28, 2024 14:22', opened: true },
@@ -24,88 +28,76 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   }
 };
 
-export const EmailLogs: React.FC = () => {
+export const EmailLogs: React.FC<EmailLogsProps> = ({ searchQuery }) => {
+  const filteredLogs = logs.filter(l => 
+    l.recipient.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (l.error && l.error.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    l.smtp.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6 animate-in slide-in-from-bottom-2 duration-400 max-w-[1600px] mx-auto pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">Delivery Logs</h1>
-          <p className="text-gray-500 text-sm">Real-time status tracking for dispatched emails.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1 md:flex-initial">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input 
-              type="text" 
-              placeholder="Search recipients..."
-              className="bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all w-full md:w-64 font-medium"
-            />
-          </div>
-          <button className="p-2 bg-white border border-gray-200 rounded-xl text-gray-500 hover:bg-gray-50 shrink-0">
-            <Filter size={18} />
-          </button>
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Delivery Registry</h1>
+          <p className="text-gray-500 text-sm">Real-time trace of all outgoing packets.</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto scrollbar-thin">
-          <table className="w-full text-left border-collapse min-w-[700px]">
-            <thead>
-              <tr className="border-b border-gray-50 bg-gray-50/50">
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Recipient</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">SMTP Route</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Timestamp</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Open Event</th>
-                <th className="px-6 py-4"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {logs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50 transition-colors group cursor-pointer">
-                  <td className="px-6 py-4">
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-black text-gray-900 truncate max-w-[200px] tracking-tight">{log.recipient}</span>
-                      {log.error && <span className="text-[9px] text-red-500 font-bold uppercase tracking-wide">{log.error}</span>}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <StatusBadge status={log.status} />
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{log.smtp}</span>
-                  </td>
-                  <td className="px-6 py-4 text-xs font-bold text-gray-400">
-                    {log.date}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex justify-center">
+      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
+        {filteredLogs.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[700px]">
+              <thead>
+                <tr className="border-b border-gray-50 bg-gray-50/50">
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Recipient Identity</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Packet Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">SMTP Cluster</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Execution Date</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">Engagement</th>
+                  <th className="px-8 py-5"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filteredLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-gray-50 transition-colors group cursor-pointer">
+                    <td className="px-8 py-5">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-black text-gray-900 tracking-tight">{log.recipient}</span>
+                        {log.error && <span className="text-[9px] text-red-500 font-bold uppercase mt-0.5">{log.error}</span>}
+                      </div>
+                    </td>
+                    <td className="px-8 py-5"><StatusBadge status={log.status} /></td>
+                    <td className="px-8 py-5"><span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{log.smtp}</span></td>
+                    <td className="px-8 py-5 text-xs font-bold text-gray-400">{log.date}</td>
+                    <td className="px-8 py-5 text-center">
                       {log.opened ? (
-                        <span className="flex items-center gap-1 text-blue-600 font-black text-[10px] uppercase tracking-widest">
-                          <ArrowUpRight size={14} className="animate-pulse" /> Read
+                        <span className="flex items-center justify-center gap-1.5 text-blue-600 font-black text-[10px] uppercase tracking-widest">
+                          <ArrowUpRight size={14} className="animate-pulse" /> Delivered & Read
                         </span>
                       ) : (
-                        <span className="text-gray-300 font-black text-[10px] uppercase tracking-widest">Unread</span>
+                        <span className="text-gray-300 font-black text-[10px] uppercase tracking-widest">Unopened</span>
                       )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button className="text-[10px] font-black uppercase tracking-widest text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      Audit Trail
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="px-6 py-4 bg-gray-50/50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Showing 8 results in this window</p>
-          <div className="flex items-center gap-2">
-            <button className="px-4 py-1.5 bg-white border border-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-300 cursor-not-allowed">Back</button>
-            <button className="px-4 py-1.5 bg-white border border-gray-100 rounded-xl text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 transition-all active:scale-95 shadow-sm">Next Page</button>
+                    </td>
+                    <td className="px-8 py-5 text-right">
+                      <button className="text-[10px] font-black uppercase tracking-widest text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">Full Trace</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        </div>
+        ) : (
+          <div className="py-32 text-center space-y-4">
+            <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto text-gray-300">
+               <Inbox size={32} />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">No matching logs</h3>
+              <p className="text-xs text-gray-400 font-medium tracking-tight">Refine your search parameters</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -10,19 +10,22 @@ import {
   Send, 
   History, 
   BarChart3, 
-  User, 
+  User as UserIcon, 
   LogOut,
   ChevronLeft,
   ChevronRight,
   X
 } from 'lucide-react';
+import { User } from '../types';
 
 interface SidebarProps {
+  user: User;
   isCollapsed: boolean;
   isMobileMenuOpen: boolean;
   onToggle: () => void;
   onCloseMobile: () => void;
   onLogout: () => void;
+  onOpenProfile: () => void;
 }
 
 const menuItems = [
@@ -35,7 +38,15 @@ const menuItems = [
   { path: '/analytics', label: 'Analytics', icon: BarChart3 },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen, onToggle, onCloseMobile, onLogout }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  user,
+  isCollapsed, 
+  isMobileMenuOpen, 
+  onToggle, 
+  onCloseMobile, 
+  onLogout,
+  onOpenProfile
+}) => {
   return (
     <div 
       className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transition-all duration-300 flex flex-col h-full lg:relative lg:translate-x-0 ${
@@ -54,7 +65,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen,
           )}
         </div>
         
-        {/* Mobile Close Button */}
         <button 
           onClick={onCloseMobile}
           className="p-2 text-gray-400 hover:text-gray-600 lg:hidden"
@@ -85,22 +95,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, isMobileMenuOpen,
       <div className="p-4 border-t border-gray-100">
         <div className="space-y-1">
           <button
-            onClick={() => {}}
+            onClick={onOpenProfile}
             className="flex items-center w-full p-3 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
           >
-            <User className={`w-5 h-5 shrink-0 ${isCollapsed && !isMobileMenuOpen ? 'mx-auto' : 'mr-3'}`} />
-            {(!isCollapsed || isMobileMenuOpen) && <span className="font-medium">Profile</span>}
+            <UserIcon className={`w-5 h-5 shrink-0 ${isCollapsed && !isMobileMenuOpen ? 'mx-auto' : 'mr-3'}`} />
+            {(!isCollapsed || isMobileMenuOpen) && <span className="font-medium">My Account</span>}
           </button>
           <button
             onClick={onLogout}
             className="flex items-center w-full p-3 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
           >
             <LogOut className={`w-5 h-5 shrink-0 ${isCollapsed && !isMobileMenuOpen ? 'mx-auto' : 'mr-3'}`} />
-            {(!isCollapsed || isMobileMenuOpen) && <span className="font-medium">Logout</span>}
+            {(!isCollapsed || isMobileMenuOpen) && <span className="font-medium">Sign Out</span>}
           </button>
         </div>
         
-        {/* Toggle Desktop Only */}
         <button 
           onClick={onToggle}
           className="hidden lg:flex mt-4 items-center justify-center w-full p-2 text-gray-400 hover:text-gray-600 transition-colors"

@@ -1,13 +1,25 @@
 
 import React from 'react';
 import { Search, Bell, HelpCircle, Menu } from 'lucide-react';
+import { User } from '../types';
 
 interface NavbarProps {
+  user: User;
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
   onToggleSidebar: () => void;
   onOpenMobile: () => void;
+  onOpenProfile: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onOpenMobile }) => {
+export const Navbar: React.FC<NavbarProps> = ({ 
+  user, 
+  searchQuery, 
+  onSearchChange, 
+  onToggleSidebar, 
+  onOpenMobile, 
+  onOpenProfile 
+}) => {
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 z-10 shrink-0">
       <div className="flex items-center flex-1 min-w-0">
@@ -23,8 +35,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onOpenMobile })
           </div>
           <input
             type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
-            placeholder="Search..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 text-sm font-bold text-gray-900 transition-all"
+            placeholder="Search across all modules..."
           />
         </div>
       </div>
@@ -38,15 +52,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onOpenMobile })
           <HelpCircle size={20} />
         </button>
         <div className="h-8 w-px bg-gray-200 mx-1 hidden sm:block"></div>
-        <div className="flex items-center gap-2 md:gap-3 pl-1">
+        <div 
+          onClick={onOpenProfile}
+          className="flex items-center gap-2 md:gap-3 pl-1 cursor-pointer hover:bg-gray-50 p-1.5 rounded-xl transition-all"
+        >
           <div className="text-right hidden md:block">
-            <p className="text-sm font-semibold text-gray-800 leading-tight truncate max-w-[100px]">Alex Thompson</p>
-            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Premium</p>
+            <p className="text-sm font-bold text-gray-900 leading-tight truncate max-w-[120px]">{user.name}</p>
+            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Premium Account</p>
           </div>
           <img
-            src="https://picsum.photos/seed/user123/40/40"
+            src={user.avatar || `https://picsum.photos/seed/${user.id}/40/40`}
             alt="User avatar"
-            className="h-9 w-9 rounded-full border border-gray-200 shrink-0 object-cover"
+            className="h-9 w-9 rounded-full border border-gray-200 shrink-0 object-cover shadow-sm"
           />
         </div>
       </div>

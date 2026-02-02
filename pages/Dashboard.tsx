@@ -16,10 +16,12 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  BarChart,
-  Bar
+  ResponsiveContainer
 } from 'recharts';
+
+interface DashboardProps {
+  searchQuery: string;
+}
 
 const data = [
   { name: 'Mon', sent: 4000, opens: 2400 },
@@ -29,6 +31,13 @@ const data = [
   { name: 'Fri', sent: 1890, opens: 4800 },
   { name: 'Sat', sent: 2390, opens: 3800 },
   { name: 'Sun', sent: 3490, opens: 4300 },
+];
+
+const sources = [
+  { name: 'Firebase Pro', type: 'NoSQL DB', count: '12.4k', color: 'bg-orange-500' },
+  { name: 'Marketing CSV', type: 'Local File', count: '5.2k', color: 'bg-green-500' },
+  { name: 'Shopify Store', type: 'REST API', count: '2.1k', color: 'bg-blue-500' },
+  { name: 'PostgreSQL Main', type: 'Relational', count: '45k', color: 'bg-indigo-500' }
 ];
 
 const StatCard: React.FC<{
@@ -53,13 +62,18 @@ const StatCard: React.FC<{
   </div>
 );
 
-export const Dashboard: React.FC = () => {
+export const Dashboard: React.FC<DashboardProps> = ({ searchQuery }) => {
+  const filteredSources = sources.filter(s => 
+    s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    s.type.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto pb-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">Platform Overview</h1>
-          <p className="text-gray-500 text-sm">Welcome back, Alex. Here's what's happening today.</p>
+          <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">Enterprise Analytics</h1>
+          <p className="text-gray-500 text-sm">Real-time pulse of your delivery network.</p>
         </div>
         <div className="flex items-center gap-2 md:gap-3">
           <button className="px-3 md:px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs md:text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
@@ -72,47 +86,19 @@ export const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <StatCard 
-          title="Sent Today" 
-          value="12,840" 
-          change="+12.5%" 
-          isPositive={true} 
-          icon={Send} 
-        />
-        <StatCard 
-          title="Total Reach" 
-          value="45.2k" 
-          change="+8.2%" 
-          isPositive={true} 
-          icon={Users} 
-        />
-        <StatCard 
-          title="Avg Open Rate" 
-          value="24.8%" 
-          change="-2.1%" 
-          isPositive={false} 
-          icon={MousePointer2} 
-        />
-        <StatCard 
-          title="Bounce Rate" 
-          value="1.4%" 
-          change="-0.5%" 
-          isPositive={true} 
-          icon={AlertCircle} 
-        />
+        <StatCard title="Sent Today" value="12,840" change="+12.5%" isPositive={true} icon={Send} />
+        <StatCard title="Total Reach" value="45.2k" change="+8.2%" isPositive={true} icon={Users} />
+        <StatCard title="Avg Open Rate" value="24.8%" change="-2.1%" isPositive={false} icon={MousePointer2} />
+        <StatCard title="Bounce Rate" value="1.4%" change="-0.5%" isPositive={true} icon={AlertCircle} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-        <div className="lg:col-span-2 bg-white p-4 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+        <div className="lg:col-span-2 bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px] md:text-xs flex items-center gap-2">
               <TrendingUp size={16} className="text-blue-500" />
-              Delivery Engine Stats
+              Infrastructure Growth
             </h3>
-            <select className="bg-gray-50 border border-gray-100 rounded-xl text-[10px] font-bold px-3 py-1.5 outline-none cursor-pointer hover:bg-gray-100 transition-colors">
-              <option>Last 7 Days</option>
-              <option>Last 30 Days</option>
-            </select>
           </div>
           <div className="h-64 md:h-80 flex-1">
             <ResponsiveContainer width="100%" height="100%">
@@ -126,9 +112,7 @@ export const Dashboard: React.FC = () => {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 700}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 700}} />
-                <Tooltip 
-                  contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontWeight: 700}}
-                />
+                <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontWeight: 700}} />
                 <Area type="monotone" dataKey="sent" stroke="#2563EB" strokeWidth={3} fillOpacity={1} fill="url(#colorSent)" />
                 <Area type="monotone" dataKey="opens" stroke="#10B981" strokeWidth={3} fill="transparent" strokeDasharray="5 5" />
               </AreaChart>
@@ -136,18 +120,13 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm flex flex-col">
+        <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col">
           <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px] md:text-xs mb-8 flex items-center gap-2">
             <TrendingUp size={16} className="text-blue-500" />
-            Active Sources
+            Filtered Sources
           </h3>
           <div className="space-y-6 flex-1 overflow-y-auto pr-1">
-            {[
-              { name: 'Firebase Pro', type: 'NoSQL DB', count: '12.4k', color: 'bg-orange-500' },
-              { name: 'Marketing CSV', type: 'Local File', count: '5.2k', color: 'bg-green-500' },
-              { name: 'Shopify Store', type: 'REST API', count: '2.1k', color: 'bg-blue-500' },
-              { name: 'PostgreSQL Main', type: 'Relational', count: '45k', color: 'bg-indigo-500' }
-            ].map((source, i) => (
+            {filteredSources.length > 0 ? filteredSources.map((source, i) => (
               <div key={i} className="flex items-center justify-between group cursor-pointer">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-xl ${source.color} flex items-center justify-center text-white font-black text-[10px] transition-transform group-hover:scale-110`}>
@@ -163,7 +142,12 @@ export const Dashboard: React.FC = () => {
                   <p className="text-[10px] text-gray-400 font-bold uppercase">Rows</p>
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="py-10 text-center space-y-2">
+                <AlertCircle className="mx-auto text-gray-300" size={32} />
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">No matching nodes</p>
+              </div>
+            )}
           </div>
           <button onClick={() => window.location.hash = '/databases'} className="w-full mt-8 py-3 bg-gray-50 text-blue-600 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-blue-100 transition-colors border border-dashed border-gray-200 active:scale-95">
             Manage Sources

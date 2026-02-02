@@ -3,6 +3,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  avatar?: string;
 }
 
 export enum Page {
@@ -22,8 +23,11 @@ export interface SMTPConfig {
   name: string;
   provider: 'gmail' | 'hostinger' | 'custom';
   email: string;
+  username: string;
+  password?: string;
   host: string;
   port: number;
+  encryption: 'SSL' | 'TLS' | 'None';
   isDefault: boolean;
 }
 
