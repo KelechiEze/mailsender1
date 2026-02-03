@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { ProfileModal } from './components/ProfileModal';
@@ -12,7 +12,7 @@ import { Analytics } from './pages/Analytics';
 import { EmailLogs } from './pages/EmailLogs';
 import { Templates } from './pages/Templates';
 import { Login } from './pages/Login';
-import { Page, SMTPConfig, DatabaseConnection, User } from './types';
+import { Page, SMTPConfig, DatabaseConnection, User, EmailLog } from './types';
 
 const AppContent: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -20,6 +20,7 @@ const AppContent: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTemplateHtml, setActiveTemplateHtml] = useState<string | null>(null);
 
   const [user, setUser] = useState<User>({
     id: 'user_1',
@@ -37,7 +38,10 @@ const AppContent: React.FC = () => {
     { id: '2', name: 'Purchased Customers', type: 'mysql', status: 'connected', recordCount: 2100 },
   ]);
 
+  const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
+
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const authStatus = localStorage.getItem('is_auth') === 'true';
@@ -51,7 +55,7 @@ const AppContent: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('is_auth');
     setIsAuthenticated(false);
-    window.location.hash = '/login';
+    navigate('/login');
   };
 
   const addSmtpProfile = (profile: Omit<SMTPConfig, 'id'>) => {
@@ -63,9 +67,18 @@ const AppContent: React.FC = () => {
     setSmtpProfiles(smtpProfiles.map(p => p.id === profile.id ? profile : p));
   };
 
+  const handleUseTemplate = (html: string) => {
+    setActiveTemplateHtml(html);
+    navigate('/compose');
+  };
+
   const addDatabase = (db: Omit<DatabaseConnection, 'id'>) => {
     const newDb = { ...db, id: Date.now().toString() };
     setDatabases([...databases, newDb]);
+  };
+
+  const handleAddLogs = (newLogs: EmailLog[]) => {
+    setEmailLogs(prev => [...newLogs, ...prev]);
   };
 
   if (!isAuthenticated && location.pathname !== '/login') {
@@ -77,7 +90,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-gray-50/50">
       <ProfileModal 
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
@@ -108,18 +121,19 @@ const AppContent: React.FC = () => {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onToggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+          isSidebarCollapsed={isSidebarCollapsed}
           onOpenMobile={() => setIsMobileMenuOpen(true)}
           onOpenProfile={() => setIsProfileModalOpen(true)}
         />
         
-        <main className="flex-1 relative overflow-y-auto focus:outline-none p-4 md:p-6">
+        <main className="flex-1 relative overflow-y-auto focus:outline-none p-4 md:p-8">
           <Routes>
             <Route path="/dashboard" element={<Dashboard searchQuery={searchQuery} />} />
-            <Route path="/compose" element={<Compose smtpProfiles={smtpProfiles} databases={databases} />} />
-            <Route path="/templates" element={<Templates searchQuery={searchQuery} />} />
+            <Route path="/compose" element={<Compose smtpProfiles={smtpProfiles} databases={databases} onAddLogs={handleAddLogs} initialHtml={activeTemplateHtml || undefined} />} />
+            <Route path="/templates" element={<Templates searchQuery={searchQuery} onUseTemplate={handleUseTemplate} />} />
             <Route path="/smtp" element={<SMTPConfigPage profiles={smtpProfiles} onAdd={addSmtpProfile} onUpdate={updateSmtpProfile} searchQuery={searchQuery} />} />
             <Route path="/databases" element={<Databases databases={databases} onAdd={addDatabase} searchQuery={searchQuery} />} />
-            <Route path="/logs" element={<EmailLogs searchQuery={searchQuery} />} />
+            <Route path="/logs" element={<EmailLogs searchQuery={searchQuery} logs={emailLogs} />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
           </Routes>

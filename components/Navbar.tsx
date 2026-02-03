@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Search, Bell, HelpCircle, Menu } from 'lucide-react';
+import { Search, Bell, HelpCircle, Menu, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { User } from '../types';
 
 interface NavbarProps {
@@ -10,6 +10,7 @@ interface NavbarProps {
   onToggleSidebar: () => void;
   onOpenMobile: () => void;
   onOpenProfile: () => void;
+  isSidebarCollapsed?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ 
@@ -18,27 +19,39 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSearchChange, 
   onToggleSidebar, 
   onOpenMobile, 
-  onOpenProfile 
+  onOpenProfile,
+  isSidebarCollapsed
 }) => {
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 z-10 shrink-0">
-      <div className="flex items-center flex-1 min-w-0">
+      <div className="flex items-center flex-1 min-w-0 gap-4">
+        {/* Mobile Menu Trigger */}
         <button 
           onClick={onOpenMobile}
-          className="p-2 mr-2 text-gray-500 hover:bg-gray-100 rounded-lg lg:hidden"
+          className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg lg:hidden"
         >
           <Menu size={20} />
         </button>
-        <div className="max-w-xl w-full relative group">
+
+        {/* Desktop Sidebar Toggle */}
+        <button 
+          onClick={onToggleSidebar}
+          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg hidden lg:flex transition-all"
+          title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {isSidebarCollapsed ? <PanelLeft size={20} /> : <PanelLeftClose size={20} />}
+        </button>
+
+        <div className="max-w-xl w-full relative group hidden sm:block">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+            <Search className="h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
           </div>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-xl leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/10 focus:border-blue-500 text-sm font-bold text-gray-900 transition-all"
-            placeholder="Search across all modules..."
+            className="block w-full pl-10 pr-3 py-2 border border-gray-100 rounded-xl leading-5 bg-gray-50/50 placeholder-gray-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 text-sm font-bold text-gray-900 transition-all"
+            placeholder="Search campaigns, logs, or tags..."
           />
         </div>
       </div>
@@ -58,7 +71,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <div className="text-right hidden md:block">
             <p className="text-sm font-bold text-gray-900 leading-tight truncate max-w-[120px]">{user.name}</p>
-            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Premium Account</p>
+            <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest">Enterprise Tier</p>
           </div>
           <img
             src={user.avatar || `https://picsum.photos/seed/${user.id}/40/40`}

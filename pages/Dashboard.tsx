@@ -7,7 +7,13 @@ import {
   AlertCircle, 
   TrendingUp, 
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Activity,
+  ShieldCheck,
+  Globe,
+  Zap,
+  Clock,
+  ChevronRight
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -33,11 +39,11 @@ const data = [
   { name: 'Sun', sent: 3490, opens: 4300 },
 ];
 
-const sources = [
-  { name: 'Firebase Pro', type: 'NoSQL DB', count: '12.4k', color: 'bg-orange-500' },
-  { name: 'Marketing CSV', type: 'Local File', count: '5.2k', color: 'bg-green-500' },
-  { name: 'Shopify Store', type: 'REST API', count: '2.1k', color: 'bg-blue-500' },
-  { name: 'PostgreSQL Main', type: 'Relational', count: '45k', color: 'bg-indigo-500' }
+const activityLogs = [
+  { id: 1, user: 'Alex T.', action: 'Broadcasted Q4 Newsletter', time: '2m ago', icon: Send, color: 'text-blue-600', bg: 'bg-blue-50' },
+  { id: 2, user: 'Node Cluster', action: 'Handshake successful', time: '5m ago', icon: ShieldCheck, color: 'text-green-600', bg: 'bg-green-50' },
+  { id: 3, user: 'System', action: 'Database sync complete', time: '12m ago', icon: Globe, color: 'text-purple-600', bg: 'bg-purple-50' },
+  { id: 4, user: 'Admin', action: 'Updated SMTP Profile', time: '1h ago', icon: Zap, color: 'text-amber-600', bg: 'bg-amber-50' },
 ];
 
 const StatCard: React.FC<{
@@ -63,95 +69,136 @@ const StatCard: React.FC<{
 );
 
 export const Dashboard: React.FC<DashboardProps> = ({ searchQuery }) => {
-  const filteredSources = sources.filter(s => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    s.type.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   return (
-    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 max-w-[1600px] mx-auto pb-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">Enterprise Analytics</h1>
-          <p className="text-gray-500 text-sm">Real-time pulse of your delivery network.</p>
-        </div>
-        <div className="flex items-center gap-2 md:gap-3">
-          <button className="px-3 md:px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs md:text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
-            Export Report
-          </button>
-          <button className="px-4 py-2 bg-blue-600 rounded-xl text-xs md:text-sm font-bold text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center gap-2">
-            <Send size={16} /> <span className="hidden xs:inline">New Campaign</span>
-          </button>
-        </div>
-      </div>
+    <div className="max-w-[1800px] mx-auto pb-8">
+      <div className="flex flex-col xl:flex-row gap-8">
+        {/* Main Content Area */}
+        <div className="flex-1 space-y-6 md:space-y-8 animate-in fade-in duration-500">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl md:text-3xl font-black text-gray-900 tracking-tight">Enterprise Analytics</h1>
+              <p className="text-gray-500 text-sm">Real-time pulse of your delivery network.</p>
+            </div>
+            <div className="flex items-center gap-2 md:gap-3">
+              <button className="px-3 md:px-4 py-2 bg-white border border-gray-100 rounded-xl text-xs md:text-sm font-bold text-gray-600 hover:bg-gray-50 transition-all shadow-sm">
+                Generate Audit
+              </button>
+              <button 
+                onClick={() => window.location.hash = '/compose'}
+                className="px-5 py-2.5 bg-blue-600 rounded-xl text-xs md:text-sm font-black text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 flex items-center gap-2 active:scale-95"
+              >
+                <Zap size={16} /> New Campaign
+              </button>
+            </div>
+          </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <StatCard title="Sent Today" value="12,840" change="+12.5%" isPositive={true} icon={Send} />
-        <StatCard title="Total Reach" value="45.2k" change="+8.2%" isPositive={true} icon={Users} />
-        <StatCard title="Avg Open Rate" value="24.8%" change="-2.1%" isPositive={false} icon={MousePointer2} />
-        <StatCard title="Bounce Rate" value="1.4%" change="-0.5%" isPositive={true} icon={AlertCircle} />
-      </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <StatCard title="Sent Today" value="12,840" change="+12.5%" isPositive={true} icon={Send} />
+            <StatCard title="Total Reach" value="45.2k" change="+8.2%" isPositive={true} icon={Users} />
+            <StatCard title="Avg Open Rate" value="24.8%" change="-2.1%" isPositive={false} icon={MousePointer2} />
+            <StatCard title="Bounce Rate" value="1.4%" change="-0.5%" isPositive={true} icon={AlertCircle} />
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-        <div className="lg:col-span-2 bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px] md:text-xs flex items-center gap-2">
-              <TrendingUp size={16} className="text-blue-500" />
-              Infrastructure Growth
+          <div className="bg-white p-4 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center gap-4">
+                 <div className="p-3 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-100">
+                    <TrendingUp size={20} />
+                 </div>
+                 <div>
+                   <h3 className="font-black text-gray-900 uppercase tracking-widest text-[11px]">Traffic Flux Control</h3>
+                   <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Global Node Performance Index</p>
+                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase rounded-full">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div> Live View
+                </span>
+              </div>
+            </div>
+            <div className="h-64 md:h-96 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorSent" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.15}/>
+                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 700}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 700}} />
+                  <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontWeight: 700}} />
+                  <Area type="monotone" dataKey="sent" stroke="#2563EB" strokeWidth={4} fillOpacity={1} fill="url(#colorSent)" />
+                  <Area type="monotone" dataKey="opens" stroke="#10B981" strokeWidth={4} fill="transparent" strokeDasharray="5 5" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+
+        {/* Dashboard Right Utility Sidebar */}
+        <div className="w-full xl:w-80 shrink-0 space-y-6">
+          {/* Health Section */}
+          <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <Activity size={14} className="text-blue-500" /> Infrastructure Health
             </h3>
-          </div>
-          <div className="h-64 md:h-80 flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorSent" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563EB" stopOpacity={0.15}/>
-                    <stop offset="95%" stopColor="#2563EB" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 700}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 10, fontWeight: 700}} />
-                <Tooltip contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontWeight: 700}} />
-                <Area type="monotone" dataKey="sent" stroke="#2563EB" strokeWidth={3} fillOpacity={1} fill="url(#colorSent)" />
-                <Area type="monotone" dataKey="opens" stroke="#10B981" strokeWidth={3} fill="transparent" strokeDasharray="5 5" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col">
-          <h3 className="font-black text-gray-900 uppercase tracking-widest text-[10px] md:text-xs mb-8 flex items-center gap-2">
-            <TrendingUp size={16} className="text-blue-500" />
-            Filtered Sources
-          </h3>
-          <div className="space-y-6 flex-1 overflow-y-auto pr-1">
-            {filteredSources.length > 0 ? filteredSources.map((source, i) => (
-              <div key={i} className="flex items-center justify-between group cursor-pointer">
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl ${source.color} flex items-center justify-center text-white font-black text-[10px] transition-transform group-hover:scale-110`}>
-                    {source.name.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-black text-gray-900 truncate tracking-tight">{source.name}</p>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{source.type}</p>
-                  </div>
+                  <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                  <span className="text-xs font-bold text-gray-700">SMTP Cluster A</span>
                 </div>
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-black text-gray-900">{source.count}</p>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase">Rows</p>
+                <span className="text-[10px] font-black text-green-600 uppercase">Stable</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                  <span className="text-xs font-bold text-gray-700">Database Sync</span>
                 </div>
+                <span className="text-[10px] font-black text-green-600 uppercase">Synced</span>
               </div>
-            )) : (
-              <div className="py-10 text-center space-y-2">
-                <AlertCircle className="mx-auto text-gray-300" size={32} />
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">No matching nodes</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.6)]"></div>
+                  <span className="text-xs font-bold text-gray-700">API Latency</span>
+                </div>
+                <span className="text-[10px] font-black text-blue-600 uppercase">24ms</span>
               </div>
-            )}
+            </div>
           </div>
-          <button onClick={() => window.location.hash = '/databases'} className="w-full mt-8 py-3 bg-gray-50 text-blue-600 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-blue-100 transition-colors border border-dashed border-gray-200 active:scale-95">
-            Manage Sources
-          </button>
+
+          {/* Activity Stream */}
+          <div className="bg-white rounded-[2rem] border border-gray-100 p-8 shadow-sm flex flex-col h-[500px]">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                <Clock size={14} className="text-blue-500" /> Activity Stream
+              </h3>
+            </div>
+            <div className="space-y-6 flex-1 overflow-y-auto pr-1">
+              {activityLogs.map((log) => (
+                <div key={log.id} className="flex gap-4 group cursor-pointer">
+                  <div className={`w-10 h-10 rounded-xl ${log.bg} ${log.color} flex items-center justify-center shrink-0 transition-transform group-hover:scale-110`}>
+                    <log.icon size={18} />
+                  </div>
+                  <div className="min-w-0 border-b border-gray-50 pb-4 flex-1">
+                    <div className="flex justify-between items-start">
+                      <p className="text-[11px] font-black text-gray-900 leading-tight">{log.user}</p>
+                      <span className="text-[9px] text-gray-400 font-bold uppercase shrink-0">{log.time}</span>
+                    </div>
+                    <p className="text-[10px] text-gray-500 font-medium leading-relaxed mt-1 truncate">{log.action}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button 
+              onClick={() => window.location.hash = '/logs'}
+              className="mt-6 w-full py-3 bg-gray-50 text-blue-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-dashed border-gray-200 hover:bg-blue-50 transition-all flex items-center justify-center gap-2"
+            >
+              View All Logs <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,21 +1,12 @@
 
 import React from 'react';
 import { Search, Filter, ArrowUpRight, CheckCircle2, XCircle, Clock, Inbox } from 'lucide-react';
+import { EmailLog } from '../types';
 
 interface EmailLogsProps {
   searchQuery: string;
+  logs: EmailLog[];
 }
-
-const logs = [
-  { id: '1', recipient: 'sarah.jones@example.com', status: 'sent', smtp: 'Marketing Pro', date: 'Oct 28, 2024 14:22', opened: true },
-  { id: '2', recipient: 'mike.ross@pearson.com', status: 'sent', smtp: 'Marketing Pro', date: 'Oct 28, 2024 14:21', opened: false },
-  { id: '3', recipient: 'jane.doe@startup.io', status: 'failed', smtp: 'Help Center', date: 'Oct 28, 2024 14:20', opened: false, error: 'Recipient address rejected' },
-  { id: '4', recipient: 'alex.hales@cricket.uk', status: 'sent', smtp: 'Marketing Pro', date: 'Oct 28, 2024 14:18', opened: true },
-  { id: '5', recipient: 'robert.deniro@actors.com', status: 'pending', smtp: 'Outreach', date: 'Oct 28, 2024 14:15', opened: false },
-  { id: '6', recipient: 'elizabeth.olsen@marvel.com', status: 'sent', smtp: 'Marketing Pro', date: 'Oct 28, 2024 14:12', opened: true },
-  { id: '7', recipient: 'steve.jobs@apple.com', status: 'failed', smtp: 'Marketing Pro', date: 'Oct 28, 2024 14:10', opened: false, error: 'Connection timeout' },
-  { id: '8', recipient: 'bill.gates@microsoft.com', status: 'sent', smtp: 'Help Center', date: 'Oct 28, 2024 14:05', opened: false },
-];
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   switch (status) {
@@ -28,11 +19,11 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   }
 };
 
-export const EmailLogs: React.FC<EmailLogsProps> = ({ searchQuery }) => {
+export const EmailLogs: React.FC<EmailLogsProps> = ({ searchQuery, logs }) => {
   const filteredLogs = logs.filter(l => 
     l.recipient.toLowerCase().includes(searchQuery.toLowerCase()) || 
     (l.error && l.error.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    l.smtp.toLowerCase().includes(searchQuery.toLowerCase())
+    l.smtpUsed.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -68,7 +59,7 @@ export const EmailLogs: React.FC<EmailLogsProps> = ({ searchQuery }) => {
                       </div>
                     </td>
                     <td className="px-8 py-5"><StatusBadge status={log.status} /></td>
-                    <td className="px-8 py-5"><span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{log.smtp}</span></td>
+                    <td className="px-8 py-5"><span className="text-xs font-bold text-gray-500 uppercase tracking-widest">{log.smtpUsed}</span></td>
                     <td className="px-8 py-5 text-xs font-bold text-gray-400">{log.date}</td>
                     <td className="px-8 py-5 text-center">
                       {log.opened ? (
@@ -94,7 +85,9 @@ export const EmailLogs: React.FC<EmailLogsProps> = ({ searchQuery }) => {
             </div>
             <div>
               <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">No matching logs</h3>
-              <p className="text-xs text-gray-400 font-medium tracking-tight">Refine your search parameters</p>
+              <p className="text-xs text-gray-400 font-medium tracking-tight">
+                {logs.length === 0 ? "Dispatch your first campaign to see delivery traces here." : "Refine your search parameters."}
+              </p>
             </div>
           </div>
         )}
