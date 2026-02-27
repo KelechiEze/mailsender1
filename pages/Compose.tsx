@@ -99,7 +99,6 @@ export const Compose: React.FC<ComposeProps> = ({ smtpProfiles, databases, onAdd
   const navigate = useNavigate();
   const [subject, setSubject] = useState("Exclusive: Your Delivery Protocol is Ready ⚡");
   const [content, setContent] = useState(initialHtml || DEFAULT_TEMPLATE);
-  const [isHtmlMode, setIsHtmlMode] = useState(true);
   const [selectedSmtp, setSelectedSmtp] = useState(smtpProfiles[0]?.id || "");
   const [selectedDb, setSelectedDb] = useState(databases[0]?.id || "");
   const [filterConditions, setFilterConditions] = useState<FilterCondition[]>([]);
@@ -553,10 +552,6 @@ export const Compose: React.FC<ComposeProps> = ({ smtpProfiles, databases, onAdd
             <div className="flex-1 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col overflow-hidden">
               <div className="px-8 py-5 border-b border-gray-50 bg-gray-50/30 flex items-center justify-between">
                 <div className="flex items-center gap-3"><div className="p-2 bg-blue-100 rounded-xl"><Code size={16} className="text-blue-600" /></div><span className="text-[11px] font-black text-gray-500 uppercase tracking-widest">Source</span></div>
-                <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-gray-200">
-                  <button onClick={() => setIsHtmlMode(true)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${isHtmlMode ? 'bg-blue-600 text-white' : 'text-gray-400'}`}>HTML</button>
-                  <button onClick={() => setIsHtmlMode(false)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${!isHtmlMode ? 'bg-blue-600 text-white' : 'text-gray-400'}`}>Visual</button>
-                </div>
               </div>
               <textarea disabled={isSending} ref={textAreaRef} value={content} onChange={(e) => setContent(e.target.value)} className="flex-1 p-8 text-sm font-mono text-blue-900 focus:outline-none resize-none bg-white leading-relaxed disabled:opacity-50" spellCheck={false} />
             </div>
