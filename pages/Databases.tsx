@@ -1,7 +1,8 @@
 
-import React, { useState } from 'react';
-import { Database, Plus, Search, AlertTriangle, ExternalLink, ShieldCheck } from 'lucide-react';
-import { DatabaseConnection } from '../types';
+import React, { useState, useRef } from 'react';
+import { Database, Plus, Search, AlertTriangle, ExternalLink, ShieldCheck, Upload, X, FileSpreadsheet, Table as TableIcon, Trash2 } from 'lucide-react';
+import { DatabaseConnection, DatabaseType } from '../types';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DatabasesProps {
   databases: DatabaseConnection[];
@@ -11,20 +12,72 @@ interface DatabasesProps {
 
 export const Databases: React.FC<DatabasesProps> = ({ databases, onAdd, searchQuery }) => {
   const [name, setName] = useState("");
-  const [type, setType] = useState<DatabaseConnection['type']>('postgres');
+  const [type, setType] = useState<DatabaseType>('postgres');
   const [count, setCount] = useState("1000");
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [previewData, setPreviewData] = useState<any[]>([]);
+  const [headers, setHeaders] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleAdd = () => {
     if (!name) return alert("Enter database name");
-    onAdd({ name, type, status: 'connected', recordCount: parseInt(count) || 0 });
+    
+    const dbData: Omit<DatabaseConnection, 'id'> = { 
+      name, 
+      type, 
+      status: 'connected', 
+      recordCount: uploadedFile ? previewData.length : (parseInt(count) || 0),
+      spreadsheetData: uploadedFile ? previewData : undefined,
+      columnHeaders: uploadedFile ? headers : undefined
+    };
+
+    onAdd(dbData);
     alert("Database connection established.");
     setName("");
+    setUploadedFile(null);
+    setPreviewData([]);
+    setHeaders([]);
+  };
+
+  const handleFileUpload = (file: File) => {
+    setUploadedFile(file);
+    // Simulate parsing spreadsheet data
+    const mockHeaders = ['first_name', 'last_name', 'email', 'company', 'status'];
+    const mockData = Array.from({ length: 10 }).map((_, i) => ({
+      first_name: `User${i}`,
+      last_name: `Test${i}`,
+      email: `user${i}@example.com`,
+      company: `Company ${i}`,
+      status: i % 2 === 0 ? 'Active' : 'Inactive'
+    }));
+    setHeaders(mockHeaders);
+    setPreviewData(mockData);
+    if (!name) setName(file.name.split('.')[0]);
+  };
+
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const onDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileUpload(file);
   };
 
   const filteredDbs = databases.filter(db => 
     db.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     db.type.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const isSpreadsheet = type === 'csv' || type === 'excel' || type === 'google_sheets';
 
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-12">
@@ -46,7 +99,11 @@ export const Databases: React.FC<DatabasesProps> = ({ databases, onAdd, searchQu
                   <option value="postgres">PostgreSQL</option>
                   <option value="mysql">MySQL</option>
                   <option value="firebase">Firebase Pro</option>
-                  <option value="csv">CSV Engine</option>
+                  <option value="supabase">Supabase</option>
+                  <option value="mongodb">MongoDB</option>
+                  <option value="csv">CSV Upload</option>
+                  <option value="excel">Excel (.xlsx)</option>
+                  <option value="google_sheets">Google Sheets</option>
                 </select>
               </div>
               <div className="space-y-1">
@@ -54,10 +111,97 @@ export const Databases: React.FC<DatabasesProps> = ({ databases, onAdd, searchQu
                 <input value={name} onChange={(e) => setName(e.target.value)} type="text" placeholder="e.g., Q4 Leads Main" className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all outline-none" />
               </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Initial Row Count</label>
-              <input value={count} onChange={(e) => setCount(e.target.value)} type="number" className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all outline-none" />
-            </div>
+
+            {isSpreadsheet ? (
+              <div className="space-y-4">
+                <div 
+                  onDragOver={onDragOver}
+                  onDragLeave={onDragLeave}
+                  onDrop={onDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-[2rem] p-10 flex flex-col items-center justify-center gap-4 transition-all cursor-pointer ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-100 bg-gray-50 hover:bg-gray-100/50'}`}
+                >
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    onChange={(e) => e.target.files?.[0] && handleFileUpload(e.target.files[0])}
+                    accept=".csv,.xlsx,.xls"
+                  />
+                  <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-blue-600">
+                    <Upload size={32} />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-black text-gray-900 uppercase tracking-widest">Drop spreadsheet here</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">or click to browse files</p>
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {uploadedFile && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 10 }}
+                      className="space-y-4"
+                    >
+                      <div className="flex items-center justify-between bg-blue-50 p-4 rounded-2xl border border-blue-100">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
+                            <FileSpreadsheet size={20} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-gray-900">{uploadedFile.name}</p>
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{previewData.length} Rows Detected</p>
+                          </div>
+                        </div>
+                        <button onClick={() => { setUploadedFile(null); setPreviewData([]); }} className="p-2 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-lg transition-all">
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+
+                      <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
+                        <div className="px-4 py-3 border-b border-gray-50 bg-gray-50/50 flex items-center gap-2">
+                          <TableIcon size={14} className="text-gray-400" />
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Data Preview</span>
+                        </div>
+                        <div className="overflow-x-auto max-h-60">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="bg-gray-50/30">
+                                {headers.map(h => (
+                                  <th key={h} className="px-4 py-3 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {previewData.slice(0, 5).map((row, i) => (
+                                <tr key={i} className="hover:bg-gray-50/50 transition-all">
+                                  {headers.map(h => (
+                                    <td key={h} className="px-4 py-3 text-xs font-medium text-gray-600 border-b border-gray-50">{row[h]}</td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        {previewData.length > 5 && (
+                          <div className="px-4 py-2 bg-gray-50/30 text-center">
+                            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Showing first 5 of {previewData.length} rows</p>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Initial Row Count</label>
+                <input value={count} onChange={(e) => setCount(e.target.value)} type="number" className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm font-bold focus:ring-4 focus:ring-blue-500/5 transition-all outline-none" />
+              </div>
+            )}
+
             <button onClick={handleAdd} className="w-full sm:w-auto px-10 py-3 bg-blue-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 flex items-center justify-center gap-2">
               <Plus size={20} /> Deploy Source
             </button>
@@ -71,7 +215,7 @@ export const Databases: React.FC<DatabasesProps> = ({ databases, onAdd, searchQu
                   <span className="px-3 py-1 bg-green-50 text-green-600 rounded-full text-[9px] font-black uppercase tracking-widest">Connected</span>
                 </div>
                 <h4 className="font-black text-gray-900 text-lg tracking-tight truncate">{db.name}</h4>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-6">{db.type} Architecture</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-6">{db.type.replace('_', ' ')} Architecture</p>
                 <div className="flex items-end justify-between border-t border-gray-50 pt-4">
                   <div>
                     <p className="text-2xl font-black text-gray-900">{db.recordCount.toLocaleString()}</p>

@@ -19,10 +19,25 @@ import {
   ChevronDown,
   Code,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Filter,
+  Plus,
+  Trash2,
+  Terminal,
+  Settings2,
+  Database as DatabaseIcon,
+  ChevronRight as ChevronRightIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SMTPConfig, DatabaseConnection, EmailLog } from '../types';
+import { SMTPConfig, DatabaseConnection, EmailLog, FilterCondition } from '../types';
+
+const OPERATORS = {
+  firebase: ['==', '!=', '<', '<=', '>', '>=', 'array-contains', 'in', 'not-in'],
+  sql: ['=', '!=', '<', '<=', '>', '>=', 'LIKE', 'IN'],
+  mongodb: ['$eq', '$ne', '$gt', '$lt', '$gte', '$lte', '$in', '$regex'],
+  supabase: ['eq', 'neq', 'gt', 'lt', 'gte', 'lte', 'like', 'ilike', 'is', 'in'],
+  csv: ['Equals', 'Contains', 'Starts With', 'Ends With']
+};
 
 interface ComposeProps {
   smtpProfiles: SMTPConfig[];
@@ -87,6 +102,8 @@ export const Compose: React.FC<ComposeProps> = ({ smtpProfiles, databases, onAdd
   const [isHtmlMode, setIsHtmlMode] = useState(true);
   const [selectedSmtp, setSelectedSmtp] = useState(smtpProfiles[0]?.id || "");
   const [selectedDb, setSelectedDb] = useState(databases[0]?.id || "");
+  const [filterConditions, setFilterConditions] = useState<FilterCondition[]>([]);
+  const [selectedCollection, setSelectedCollection] = useState("");
   const [previewDevice, setPreviewDevice] = useState<'desktop' | 'mobile'>('desktop');
   const [isFullscreenPreview, setIsFullscreenPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -111,6 +128,64 @@ export const Compose: React.FC<ComposeProps> = ({ smtpProfiles, databases, onAdd
     }
   };
 
+  const currentDb = databases.find(d => d.id === selectedDb);
+  const dbType = currentDb?.type || 'postgres';
+
+  const addCondition = () => {
+    const newCondition: FilterCondition = {
+      id: Date.now().toString(),
+      field: currentDb?.columnHeaders?.[0] || 'status',
+      operator: dbType === 'mongodb' ? '$eq' : (dbType === 'firebase' ? '==' : '='),
+      value: '',
+      logic: filterConditions.length > 0 ? 'AND' : undefined
+    };
+    setFilterConditions([...filterConditions, newCondition]);
+  };
+
+  const removeCondition = (id: string) => {
+    setFilterConditions(filterConditions.filter(c => c.id !== id));
+  };
+
+  const updateCondition = (id: string, updates: Partial<FilterCondition>) => {
+    setFilterConditions(filterConditions.map(c => c.id === id ? { ...c, ...updates } : c));
+  };
+
+  const getSqlPreview = () => {
+    if (filterConditions.length === 0) return "";
+    const where = filterConditions.map((c, i) => {
+      const logic = i > 0 ? ` ${c.logic || 'AND'} ` : "";
+      const val = isNaN(Number(c.value)) ? `'${c.value}'` : c.value;
+      return `${logic}${c.field} ${c.operator} ${val}`;
+    }).join("");
+    return `WHERE ${where}`;
+  };
+
+  const getMongoPreview = () => {
+    if (filterConditions.length === 0) return "{}";
+    const query: any = {};
+    filterConditions.forEach(c => {
+      query[c.field] = { [c.operator]: isNaN(Number(c.value)) ? c.value : Number(c.value) };
+    });
+    return JSON.stringify(query, null, 2);
+  };
+
+  const getSupabasePreview = () => {
+    let code = `.supabase\n  .from('${selectedCollection || 'users'}')\n  .select('*')`;
+    filterConditions.forEach(c => {
+      const val = isNaN(Number(c.value)) ? `'${c.value}'` : c.value;
+      code += `\n  .${c.operator}('${c.field}', ${val})`;
+    });
+    return code;
+  };
+
+  const getOperators = () => {
+    if (dbType === 'mysql' || dbType === 'postgres') return OPERATORS.sql;
+    if (dbType === 'mongodb') return OPERATORS.mongodb;
+    if (dbType === 'firebase') return OPERATORS.firebase;
+    if (dbType === 'supabase') return OPERATORS.supabase;
+    return OPERATORS.csv;
+  };
+
   const handleSend = async () => {
     if (isSending) return;
     
@@ -119,6 +194,12 @@ export const Compose: React.FC<ComposeProps> = ({ smtpProfiles, databases, onAdd
     
     // Simulate campaign sending process
     await new Promise(r => setTimeout(r, 600));
+    
+    if (filterConditions.length > 0) {
+      setSendStep(`Applying ${dbType.toUpperCase()} Filters...`);
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
     setSendStep("Validating SMTP Handshake...");
     await new Promise(r => setTimeout(r, 800));
     setSendStep("Broadcasting Packets...");
@@ -316,8 +397,151 @@ export const Compose: React.FC<ComposeProps> = ({ smtpProfiles, databases, onAdd
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1"><Database size={12} className="text-blue-500" /> List Source</label>
-                <div className="relative"><select disabled={isSending} value={selectedDb} onChange={(e) => setSelectedDb(e.target.value)} className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold text-gray-800 outline-none appearance-none transition-all disabled:opacity-50">{databases.map(db => <option key={db.id} value={db.id}>{db.name}</option>)}</select><ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} /></div>
+                <div className="relative"><select disabled={isSending} value={selectedDb} onChange={(e) => { setSelectedDb(e.target.value); setFilterConditions([]); }} className="w-full bg-gray-50/50 border border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold text-gray-800 outline-none appearance-none transition-all disabled:opacity-50">{databases.map(db => <option key={db.id} value={db.id}>{db.name}</option>)}</select><ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} /></div>
               </div>
+            </div>
+
+            <div className="bg-gray-50/50 rounded-[2rem] border border-gray-100 p-6 md:p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
+                    <Filter size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">
+                      {dbType === 'firebase' ? 'Firestore Query Builder' : 
+                       dbType === 'mongodb' ? 'MongoDB Query Builder' :
+                       dbType === 'supabase' ? 'Supabase Filter Builder' :
+                       (dbType === 'mysql' || dbType === 'postgres') ? 'SQL WHERE Clause Builder' : 'CSV Keyword Filter'}
+                    </h3>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Construct dynamic recipient filters</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={addCondition}
+                  disabled={isSending}
+                  className="px-4 py-2 bg-white hover:bg-blue-600 text-blue-600 hover:text-white border border-blue-100 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 shadow-sm"
+                >
+                  <Plus size={14} /> Add Condition
+                </button>
+              </div>
+
+              {(dbType === 'firebase' || dbType === 'mongodb' || dbType === 'mysql' || dbType === 'postgres' || dbType === 'supabase') && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Target {dbType === 'mongodb' || dbType === 'firebase' ? 'Collection' : 'Table'}</label>
+                  <div className="relative">
+                    <select 
+                      value={selectedCollection} 
+                      onChange={(e) => setSelectedCollection(e.target.value)}
+                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold text-gray-800 outline-none appearance-none"
+                    >
+                      <option value="">Select {dbType === 'mongodb' || dbType === 'firebase' ? 'Collection' : 'Table'}...</option>
+                      <option value="users">users</option>
+                      <option value="customers">customers</option>
+                      <option value="leads">leads</option>
+                      <option value="subscribers">subscribers</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <AnimatePresence mode="popLayout">
+                  {filterConditions.map((condition, index) => (
+                    <motion.div 
+                      key={condition.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      className="flex flex-col md:flex-row items-center gap-3 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm group"
+                    >
+                      {index > 0 && (
+                        <div className="md:w-20 shrink-0">
+                          <select 
+                            value={condition.logic} 
+                            onChange={(e) => updateCondition(condition.id, { logic: e.target.value as any })}
+                            className="w-full bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 text-[10px] font-black uppercase tracking-widest text-blue-600 outline-none"
+                          >
+                            <option value="AND">AND</option>
+                            <option value="OR">OR</option>
+                          </select>
+                        </div>
+                      )}
+                      
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
+                        <div className="relative">
+                          <select 
+                            value={condition.field} 
+                            onChange={(e) => updateCondition(condition.id, { field: e.target.value })}
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-xs font-bold text-gray-800 outline-none appearance-none"
+                          >
+                            {(currentDb?.columnHeaders || ['id', 'email', 'first_name', 'last_name', 'status', 'created_at']).map(f => (
+                              <option key={f} value={f}>{f}</option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={12} />
+                        </div>
+
+                        <div className="relative">
+                          <select 
+                            value={condition.operator} 
+                            onChange={(e) => updateCondition(condition.id, { operator: e.target.value })}
+                            className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-xs font-bold text-gray-800 outline-none appearance-none"
+                          >
+                            {getOperators().map(op => (
+                              <option key={op} value={op}>{op}</option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={12} />
+                        </div>
+
+                        <input 
+                          type="text" 
+                          value={condition.value} 
+                          onChange={(e) => updateCondition(condition.id, { value: e.target.value })}
+                          placeholder="Value..."
+                          className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-2.5 text-xs font-bold text-gray-800 outline-none focus:ring-2 focus:ring-blue-500/10"
+                        />
+                      </div>
+
+                      <button 
+                        onClick={() => removeCondition(condition.id)}
+                        className="p-2.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+
+                {filterConditions.length === 0 && (
+                  <div className="py-10 border-2 border-dashed border-gray-100 rounded-[2rem] flex flex-col items-center justify-center text-gray-400">
+                    <Filter size={32} className="mb-3 opacity-20" />
+                    <p className="text-[10px] font-black uppercase tracking-widest">No active filters</p>
+                    <p className="text-[9px] font-bold uppercase tracking-widest mt-1">Click "Add Condition" to filter recipients</p>
+                  </div>
+                )}
+              </div>
+
+              {filterConditions.length > 0 && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="bg-gray-900 rounded-2xl p-6 space-y-3"
+                >
+                  <div className="flex items-center gap-2 text-blue-400">
+                    <Terminal size={14} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Query Preview</span>
+                  </div>
+                  <pre className="text-xs font-mono text-gray-300 overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                    {dbType === 'mongodb' ? getMongoPreview() : 
+                     dbType === 'supabase' ? getSupabasePreview() :
+                     (dbType === 'mysql' || dbType === 'postgres') ? getSqlPreview() : 
+                     `Filtering CSV by ${filterConditions.length} conditions...`}
+                  </pre>
+                </motion.div>
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 px-1"><FileText size={12} className="text-blue-500" /> Subject Header</label>

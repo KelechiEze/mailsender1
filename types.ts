@@ -31,12 +31,24 @@ export interface SMTPConfig {
   isDefault: boolean;
 }
 
+export type DatabaseType = 'firebase' | 'mysql' | 'postgres' | 'mongodb' | 'supabase' | 'csv' | 'google_sheets' | 'excel';
+
 export interface DatabaseConnection {
   id: string;
   name: string;
-  type: 'firebase' | 'mysql' | 'postgres' | 'mongodb' | 'supabase' | 'csv';
+  type: DatabaseType;
   status: 'connected' | 'disconnected';
   recordCount: number;
+  spreadsheetData?: any[];
+  columnHeaders?: string[];
+}
+
+export interface FilterCondition {
+  id: string;
+  field: string;
+  operator: string;
+  value: string;
+  logic?: 'AND' | 'OR';
 }
 
 export interface EmailLog {
